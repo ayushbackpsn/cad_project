@@ -1,0 +1,16 @@
+scenario,policy_type,total_energy
+normal,static,501.2409955229633
+normal,reactive,203.50640471052773
+normal,predictive,200.4963982091853
+increasing,static,501.3615659914798
+increasing,reactive,200.54462639659192
+increasing,predictive,200.54462639659192
+spike,static,501.3713912769248
+spike,reactive,302.82794361995934
+spike,predictive,300.8228347661549
+decreasing,static,501.3921172974057
+decreasing,reactive,601.6705407568866
+decreasing,predictive,600.6660997828535
+variable,static,501.2337780749613
+variable,reactive,300.7402668449769
+variable,predictive,200.49351122998456

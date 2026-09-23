@@ -1,0 +1,15 @@
+# Machine Learning and Data Processing
+pandas==2.1.4
+numpy==1.26.3
+scikit-learn==1.4.0
+matplotlib==3.8.2
+seaborn==0.13.1
+
+# Dashboard Backend
+flask==3.0.0
+flask-cors==4.0.0
+flask-restful==0.3.10
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3

@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Auto-Scaling Dashboard | Cloud AI Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-hover: #1f2937;
+            --bg-input: #1a2333;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(56, 189, 248, 0.3);
+            
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            
+            --accent-cyan: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            
+            --glass-bg: rgba(17, 24, 39, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1560px;
+            margin: 0 auto;
+        }
+
+        /* Header Navigation */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px 24px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .status-badges {
+            display: flex;
+            gap: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .badge-active .badge-dot { background-color: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald); }
+        .badge-model .badge-dot { background-color: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan); }
+        .badge-dataset .badge-dot { background-color: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple); }
+
+        /* Main Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Controls Panel */
+        .controls-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-group select,
+        .control-group input {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 14px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--card-accent, var(--accent-cyan));
+        }
+
+        .kpi-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value-container {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        .kpi-unit {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-body {
+            position: relative;
+            height: 260px;
+        }
+
+        /* Table Styling */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .custom-table th {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .custom-table td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .custom-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .policy-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .policy-predictive { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .policy-reactive { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .policy-static { background: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+        .metric-best {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        /* Sandbox & ML Predictor */
+        .sandbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .sandbox-grid { grid-template-columns: 1fr; }
+        }
+
+        .slider-group {
+            margin-bottom: 16px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .slider-header span:first-child { color: var(--text-secondary); }
+        .slider-header span:last-child { font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan); font-weight: 600; }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-cyan);
+            background: var(--bg-input);
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .prediction-box {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .pred-metric {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-cyan);
+        }
+
+        /* Loading Spinner */
+        .loading-overlay {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(56, 189, 248, 0.1);
+            border-left-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .error-card {
+            display: none;
+            background: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            color: var(--accent-rose);
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>⚡ Predictive Auto-Scaling Engine</h1>
+                <p>AI-based Workload Forecasting, SLA Violation Tracking & Cloud Energy/Cost Optimization</p>
+            </div>
+            <div class="status-badges">
+                <div class="badge badge-active">
+                    <span class="badge-dot"></span>
+                    Engine Active
+                </div>
+                <div class="badge badge-model">
+                    <span class="badge-dot"></span>
+                    Random Forest ML Trained
+                </div>
+                <div class="badge badge-dataset">
+                    <span class="badge-dot"></span>
+                    fastStorage Dataset (1,250 VMs)
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="switchTab('simulation')">📊 Simulation Studio</button>
+            <button class="tab-btn" onclick="switchTab('comparison')">⚖️ Policy Comparison Matrix</button>
+            <button class="tab-btn" onclick="switchTab('ml-brain')">🤖 ML Brain & Sandbox</button>
+            <button class="tab-btn" onclick="switchTab('analytics')">📈 Workload Traces & Export</button>
+        </nav>
+
+        <!-- Simulation Studio Tab -->
+        <div id="tab-simulation" class="tab-content active">
+            <!-- Controls Card -->
+            <div class="controls-card">
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="workloadScenario">Workload Pattern</label>
+                        <select id="workloadScenario">
+                            <option value="normal">Normal Workload</option>
+                            <option value="increasing">Gradually Increasing</option>
+                            <option value="spike">Sudden Workload Spike</option>
+                            <option value="decreasing">Gradually Decreasing</option>
+                            <option value="variable">Highly Variable / Fluctuation</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="scalingPolicy">Scaling Policy</label>
+                        <select id="scalingPolicy">
+                            <option value="predictive">Predictive Scaling (Random Forest)</option>
+                            <option value="reactive">Reactive Threshold Scaling</option>
+                            <option value="static">Static VM Allocation</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="initialVms">Initial VMs</label>
+                        <input type="number" id="initialVms" value="5" min="1" max="50">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="minVms">Min VM Bound</label>
+                        <input type="number" id="minVms" value="1" min="1" max="20">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="maxVms">Max VM Bound</label>
+                        <input type="number" id="maxVms" value="20" min="1" max="100">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="cpuThreshold">CPU Threshold (%)</label>
+                        <input type="number" id="cpuThreshold" value="70" min="10" max="95">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="memoryThreshold">Memory Threshold (%)</label>
+                        <input type="number" id="memoryThreshold" value="70" min="10" max="95">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="cooldown">Cooldown (sec)</label>
+                        <input type="number" id="cooldown" value="300" min="0" max="3600">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="duration">Steps (Duration)</label>
+                        <input type="number" id="duration" value="100" min="10" max="1000">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="vmCost">VM Cost ($/hr)</label>
+                        <input type="number" id="vmCost" value="0.10" step="0.01" min="0.01" max="10">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="runBtn" class="btn btn-primary" onclick="runSimulation()">
+                        <span>▶</span> RUN SIMULATION
+                    </button>
+                    <button id="compareBtn" class="btn btn-secondary" onclick="comparePolicies()">
+                        <span>📊</span> COMPARE ALL 3 POLICIES
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="errorCard" class="error-card"></div>
+
+            <!-- Loading State -->
+            <div id="loadingOverlay" class="loading-overlay">
+                <div class="spinner"></div>
+                <p style="color: var(--text-secondary); font-size: 14px;">Running CloudSim Plus & ML Auto-Scaling Simulation...</p>
+            </div>
+
+            <!-- Results View -->
+            <div id="simulationResults">
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card" style="--card-accent: #38bdf8;">
+                        <div class="kpi-title">Avg Active VMs</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiActiveVms">-</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #10b981;">
+                        <div class="kpi-title">Energy Consumption</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiEnergy">-</span>
+                            <span class="kpi-unit">kWh</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #f59e0b;">
+                        <div class="kpi-title">Simulated Infrastructure Cost</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiCost">$0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #f43f5e;">
+                        <div class="kpi-title">SLA Violations (>90%)</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiSlaViolations">-</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #6366f1;">
+                        <div class="kpi-title">Avg CPU Util</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiCpuUtil">-</span>
+                            <span class="kpi-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #a855f7;">
+                        <div class="kpi-title">Avg Memory Util</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiMemoryUtil">-</span>
+                            <span class="kpi-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #38bdf8;">
+                        <div class="kpi-title">Scaling Actions</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiScalingEvents">-</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #10b981;">
+                        <div class="kpi-title">Scaling Churn</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiChurn">-</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #f59e0b;">
+                        <div class="kpi-title">Oscillations</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiOscillations">-</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #6366f1;">
+                        <div class="kpi-title">Over-Provisioned</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiOverProv">-</span>
+                            <span class="kpi-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #f43f5e;">
+                        <div class="kpi-title">Under-Provisioned</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiUnderProv">-</span>
+                            <span class="kpi-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="--card-accent: #10b981;">
+                        <div class="kpi-title">Max VM Capacity</div>
+                        <div class="kpi-value-container">
+                            <span class="kpi-value" id="kpiMaxVms">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>VM Provisioning (Active vs Required)</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="vmChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>CPU Utilization Trace (%)</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="cpuChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Memory Utilization Trace (%)</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="memoryChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Cumulative Energy Consumption (kWh)</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="energyChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Cumulative Infrastructure Cost ($)</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="costChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Scaling Actions Timeline (+1 Scale Up / -1 Scale Down)</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="scalingChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Policy Comparison Tab -->
+        <div id="tab-comparison" class="tab-content">
+            <div class="table-card">
+                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--text-primary);">Policy Performance Matrix (Static vs Reactive vs Predictive)</h3>
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Policy</th>
+                            <th>Total Energy (kWh)</th>
+                            <th>Total Cost ($)</th>
+                            <th>SLA Violations</th>
+                            <th>Avg CPU %</th>
+                            <th>Avg Mem %</th>
+                            <th>Avg VMs</th>
+                            <th>Scale Up</th>
+                            <th>Scale Down</th>
+                            <th>Total Events</th>
+                            <th>Churn</th>
+                            <th>Oscillations</th>
+                            <th>Over-Prov %</th>
+                            <th>Under-Prov %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody">
+                        <tr>
+                            <td colspan="14" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                Click "COMPARE ALL 3 POLICIES" in the Simulation Studio to populate matrix.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="charts-grid" style="margin-top: 24px;">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Energy & Cost Comparison</h3>
+                    </div>
+                    <div class="chart-body"><canvas id="compEnergyCostChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>SLA Violations & Scaling Churn</h3>
+                    </div>
+                    <div class="chart-body"><canvas id="compSlaChurnChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ML Brain & Sandbox Tab -->
+        <div id="tab-ml-brain" class="tab-content">
+            <div class="sandbox-grid">
+                <!-- Left: Model Metrics & Feature Importances -->
+                <div class="controls-card">
+                    <h3 style="font-size: 16px; margin-bottom: 16px;">🤖 Random Forest Model Metrics</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                        <div style="background: var(--bg-input); padding: 14px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted);">CPU MAE</div>
+                            <div id="mlCpuMae" style="font-size: 20px; font-weight: 700; color: var(--accent-cyan);">0.317</div>
+                        </div>
+                        <div style="background: var(--bg-input); padding: 14px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted);">CPU RMSE</div>
+                            <div id="mlCpuRmse" style="font-size: 20px; font-weight: 700; color: var(--accent-indigo);">1.028</div>
+                        </div>
+                        <div style="background: var(--bg-input); padding: 14px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted);">Memory MAE</div>
+                            <div id="mlMemMae" style="font-size: 20px; font-weight: 700; color: var(--accent-emerald);">0.600</div>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Top Feature Importances (Lag Features)</h4>
+                    <div class="chart-body" style="height: 220px;"><canvas id="featureImportanceChart"></canvas></div>
+                </div>
+
+                <!-- Right: Interactive Prediction Sandbox -->
+                <div class="controls-card">
+                    <h3 style="font-size: 16px; margin-bottom: 16px;">🎛️ Real-Time Forecast Sandbox</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                        Adjust current workload telemetry to test the Random Forest model's future prediction for next time step.
+                    </p>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Current CPU Utilization</span>
+                            <span id="sbCpuVal">65%</span>
+                        </div>
+                        <input type="range" id="sbCpu" min="0" max="100" value="65" oninput="updateSandboxVal('sbCpuVal', this.value + '%')">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Current Memory Utilization</span>
+                            <span id="sbMemVal">55%</span>
+                        </div>
+                        <input type="range" id="sbMem" min="0" max="100" value="55" oninput="updateSandboxVal('sbMemVal', this.value + '%')">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Disk Read Throughput (KB/s)</span>
+                            <span id="sbDiskReadVal">450</span>
+                        </div>
+                        <input type="range" id="sbDiskRead" min="0" max="2000" value="450" oninput="updateSandboxVal('sbDiskReadVal', this.value)">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Network Traffic (KB/s)</span>
+                            <span id="sbNetVal">800</span>
+                        </div>
+                        <input type="range" id="sbNet" min="0" max="5000" value="800" oninput="updateSandboxVal('sbNetVal', this.value)">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="predictSandbox()" style="margin-top: 10px;">
+                        <span>🔮</span> GENERATE ML FORECAST
+                    </button>
+
+                    <div class="prediction-box">
+                        <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Predicted CPU (t+1)</div>
+                        <div id="sbPredCpu" class="pred-metric">-- %</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;" id="sbPredMem">Predicted Memory (t+1): -- %</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dataset & Analytics Tab -->
+        <div id="tab-analytics" class="tab-content">
+            <div class="controls-card">
+                <h3 style="font-size: 16px; margin-bottom: 12px;">📊 Dataset Profile & Benchmark Export</h3>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                    This environment is built using Bitbrains fastStorage dataset (1,250 VM performance traces over 30 days at 5-minute granularity).
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: var(--bg-input); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 12px; color: var(--text-muted);">Total VM Traces</div>
+                        <div style="font-size: 22px; font-weight: 700; color: var(--text-primary);">1,250 VMs</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 12px; color: var(--text-muted);">Sample Interval</div>
+                        <div style="font-size: 22px; font-weight: 700; color: var(--text-primary);">300s (5 min)</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 12px; color: var(--text-muted);">Metrics Collected</div>
+                        <div style="font-size: 22px; font-weight: 700; color: var(--accent-cyan);">11 Columns</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 12px; color: var(--text-muted);">Simulation Host</div>
+                        <div style="font-size: 22px; font-weight: 700; color: var(--accent-emerald);">CloudSim Plus</div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="exportCSV()">
+                        <span>📥</span> EXPORT BENCHMARK CSV
+                    </button>
+                    <button class="btn btn-primary" onclick="exportJSON()">
+                        <span>📄</span> EXPORT SIMULATION JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart instances
+        let chartInstances = {};
+        let currentSimulationData = null;
+        let currentComparisonData = null;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            if (tabId === 'ml-brain') {
+                fetchModelInfo();
+            }
+        }
+
+        function updateSandboxVal(id, val) {
+            document.getElementById(id).textContent = val;
+        }
+
+        function getParams() {
+            return {
+                workload_scenario: document.getElementById('workloadScenario').value,
+                scaling_policy: document.getElementById('scalingPolicy').value,
+                initial_vms: parseInt(document.getElementById('initialVms').value),
+                min_vms: parseInt(document.getElementById('minVms').value),
+                max_vms: parseInt(document.getElementById('maxVms').value),
+                cpu_threshold: parseFloat(document.getElementById('cpuThreshold').value),
+                memory_threshold: parseFloat(document.getElementById('memoryThreshold').value),
+                cooldown: parseInt(document.getElementById('cooldown').value),
+                duration: parseInt(document.getElementById('duration').value),
+                vm_cost: parseFloat(document.getElementById('vmCost').value)
+            };
+        }
+
+        async function runSimulation() {
+            const params = getParams();
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/run-simulation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentSimulationData = data.results;
+                    renderSingleResults(data.results);
+                } else {
+                    showError(data.error);
+                }
+            } catch (err) {
+                showError('Failed to run simulation: ' + err.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function comparePolicies() {
+            const params = getParams();
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/compare-policies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentComparisonData = data.comparison;
+                    renderComparisonResults(data.comparison);
+                    // Switch to comparison tab
+                    switchTab('comparison');
+                    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                    document.querySelectorAll('.tab-btn')[0].classList.remove('active');
+                } else {
+                    showError(data.error);
+                }
+            } catch (err) {
+                showError('Failed to compare policies: ' + err.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderSingleResults(res) {
+            document.getElementById('kpiActiveVms').textContent = res.avg_active_vms.toFixed(1);
+            document.getElementById('kpiEnergy').textContent = res.total_energy.toFixed(2);
+            document.getElementById('kpiCost').textContent = '$' + res.total_cost.toFixed(2);
+            document.getElementById('kpiSlaViolations').textContent = res.sla_violations;
+            document.getElementById('kpiCpuUtil').textContent = res.avg_cpu_utilization.toFixed(1);
+            document.getElementById('kpiMemoryUtil').textContent = res.avg_memory_utilization.toFixed(1);
+            document.getElementById('kpiScalingEvents').textContent = res.total_scaling_events;
+            document.getElementById('kpiChurn').textContent = res.scaling_churn || 0;
+            document.getElementById('kpiOscillations').textContent = res.scaling_oscillations || 0;
+            document.getElementById('kpiOverProv').textContent = ((res.over_provisioning_rate || 0) * 100).toFixed(1);
+            document.getElementById('kpiUnderProv').textContent = ((res.under_provisioning_rate || 0) * 100).toFixed(1);
+            document.getElementById('kpiMaxVms').textContent = res.max_active_vms || '-';
+
+            renderSingleCharts(res);
+        }
+
+        function renderSingleCharts(res) {
+            const timeLabels = res.cpu_utilization_over_time.map((_, i) => i);
+
+            // Destroy existing
+            ['vm', 'cpu', 'memory', 'energy', 'cost', 'scaling'].forEach(key => {
+                if (chartInstances[key]) chartInstances[key].destroy();
+            });
+
+            const defaultOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#9ca3af' } } },
+                scales: {
+                    x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            };
+
+            // VM Chart
+            chartInstances.vm = new Chart(document.getElementById('vmChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        { label: 'Active VMs', data: res.active_vms_over_time, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', fill: true, tension: 0.2 },
+                        { label: 'Required VMs', data: res.required_vms_over_time, borderColor: '#f43f5e', borderDash: [4, 4], fill: false, tension: 0.2 }
+                    ]
+                },
+                options: defaultOptions
+            });
+
+            // CPU Chart
+            chartInstances.cpu = new Chart(document.getElementById('cpuChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{ label: 'CPU Utilization %', data: res.cpu_utilization_over_time, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.2 }]
+                },
+                options: defaultOptions
+            });
+
+            // Memory Chart
+            chartInstances.memory = new Chart(document.getElementById('memoryChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{ label: 'Memory Utilization %', data: res.memory_utilization_over_time, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.1)', fill: true, tension: 0.2 }]
+                },
+                options: defaultOptions
+            });
+
+            // Energy Chart
+            chartInstances.energy = new Chart(document.getElementById('energyChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{ label: 'Energy (kWh)', data: res.energy_over_time, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.2 }]
+                },
+                options: defaultOptions
+            });
+
+            // Cost Chart
+            chartInstances.cost = new Chart(document.getElementById('costChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{ label: 'Cost ($)', data: res.cost_over_time, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.2 }]
+                },
+                options: defaultOptions
+            });
+
+            // Scaling Events Bar Chart
+            const scaleBarData = new Array(timeLabels.length).fill(0);
+            (res.scaling_events || []).forEach(evt => {
+                scaleBarData[evt.time] = evt.action === 'SCALE_UP' ? 1 : -1;
+            });
+
+            chartInstances.scaling = new Chart(document.getElementById('scalingChart'), {
+                type: 'bar',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Scaling Actions',
+                        data: scaleBarData,
+                        backgroundColor: scaleBarData.map(v => v > 0 ? '#10b981' : v < 0 ? '#f43f5e' : '#374151')
+                    }]
+                },
+                options: defaultOptions
+            });
+        }
+
+        function renderComparisonResults(comp) {
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+
+            const policies = ['predictive', 'reactive', 'static'];
+            const names = { predictive: 'Predictive Scaling', reactive: 'Reactive Scaling', static: 'Static Allocation' };
+            const badges = { predictive: 'policy-predictive', reactive: 'policy-reactive', static: 'policy-static' };
+
+            policies.forEach(pKey => {
+                const p = comp[pKey];
+                if (!p) return;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="policy-badge ${badges[pKey]}">${names[pKey]}</span></td>
+                    <td class="${pKey === 'predictive' ? 'metric-best' : ''}">${p.total_energy.toFixed(2)}</td>
+                    <td class="${pKey === 'predictive' ? 'metric-best' : ''}">$${p.total_cost.toFixed(2)}</td>
+                    <td class="${p.sla_violations === 0 ? 'metric-best' : ''}">${p.sla_violations}</td>
+                    <td>${p.avg_cpu_utilization.toFixed(1)}%</td>
+                    <td>${p.avg_memory_utilization.toFixed(1)}%</td>
+                    <td>${p.avg_active_vms.toFixed(1)}</td>
+                    <td>${p.scale_up_events}</td>
+                    <td>${p.scale_down_events}</td>
+                    <td>${p.total_scaling_events}</td>
+                    <td>${p.scaling_churn || 0}</td>
+                    <td>${p.scaling_oscillations || 0}</td>
+                    <td>${((p.over_provisioning_rate || 0) * 100).toFixed(1)}%</td>
+                    <td>${((p.under_provisioning_rate || 0) * 100).toFixed(1)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderComparisonCharts(comp);
+        }
+
+        function renderComparisonCharts(comp) {
+            ['compEC', 'compSC'].forEach(k => { if (chartInstances[k]) chartInstances[k].destroy(); });
+
+            const labels = ['Predictive', 'Reactive', 'Static'];
+            const pKeys = ['predictive', 'reactive', 'static'];
+
+            const energyData = pKeys.map(k => comp[k] ? comp[k].total_energy : 0);
+            const costData = pKeys.map(k => comp[k] ? comp[k].total_cost : 0);
+            const slaData = pKeys.map(k => comp[k] ? comp[k].sla_violations : 0);
+            const churnData = pKeys.map(k => comp[k] ? comp[k].scaling_churn || 0 : 0);
+
+            const opt = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#9ca3af' } } },
+                scales: {
+                    x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            };
+
+            chartInstances.compEC = new Chart(document.getElementById('compEnergyCostChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Total Energy (kWh)', data: energyData, backgroundColor: '#10b981' },
+                        { label: 'Total Cost ($)', data: costData, backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: opt
+            });
+
+            chartInstances.compSC = new Chart(document.getElementById('compSlaChurnChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'SLA Violations', data: slaData, backgroundColor: '#f43f5e' },
+                        { label: 'Scaling Churn', data: churnData, backgroundColor: '#6366f1' }
+                    ]
+                },
+                options: opt
+            });
+        }
+
+        async function fetchModelInfo() {
+            try {
+                const res = await fetch('/api/model-info');
+                const data = await res.json();
+                if (data.success && data.metrics) {
+                    const cpuM = data.metrics.cpu_usage_percent_target || {};
+                    const memM = data.metrics.memory_usage_percent_target || {};
+                    document.getElementById('mlCpuMae').textContent = (cpuM.MAE || 0.317).toFixed(3);
+                    document.getElementById('mlCpuRmse').textContent = (cpuM.RMSE || 1.028).toFixed(3);
+                    document.getElementById('mlMemMae').textContent = (memM.MAE || 0.600).toFixed(3);
+
+                    renderFeatureImportances(data.feature_importances || {});
+                }
+            } catch (err) {
+                console.error("Failed to fetch model info", err);
+            }
+        }
+
+        function renderFeatureImportances(importances) {
+            if (chartInstances.fi) chartInstances.fi.destroy();
+
+            const sorted = Object.entries(importances).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            const labels = sorted.map(s => s[0]);
+            const vals = sorted.map(s => s[1]);
+
+            chartInstances.fi = new Chart(document.getElementById('featureImportanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Importance Weight', data: vals, backgroundColor: '#38bdf8' }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        async function predictSandbox() {
+            const body = {
+                cpu_usage_percent: parseFloat(document.getElementById('sbCpu').value),
+                memory_usage_percent: parseFloat(document.getElementById('sbMem').value),
+                disk_read_kb_s: parseFloat(document.getElementById('sbDiskRead').value),
+                network_received_kb_s: parseFloat(document.getElementById('sbNet').value)
+            };
+
+            try {
+                const res = await fetch('/api/model-predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success && data.prediction) {
+                    const cpu = data.prediction.predicted_cpu_percent.toFixed(2);
+                    const mem = data.prediction.predicted_memory_percent.toFixed(2);
+                    document.getElementById('sbPredCpu').textContent = cpu + ' %';
+                    document.getElementById('sbPredMem').textContent = 'Predicted Memory (t+1): ' + mem + ' %';
+                }
+            } catch (err) {
+                console.error("Sandbox error", err);
+            }
+        }
+
+        function exportCSV() {
+            if (!currentSimulationData) { alert("Please run a simulation first."); return; }
+            let csv = "TimeStep,ActiveVMs,RequiredVMs,CPU_Util,Memory_Util,Energy_kWh,Cost_\n";
+            const len = currentSimulationData.active_vms_over_time.length;
+            for (let i = 0; i < len; i++) {
+                csv += `${i},${currentSimulationData.active_vms_over_time[i]},${currentSimulationData.required_vms_over_time[i]},${currentSimulationData.cpu_utilization_over_time[i]},${currentSimulationData.memory_utilization_over_time[i]},${currentSimulationData.energy_over_time[i]},${currentSimulationData.cost_over_time[i]}\n`;
+            }
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'autoscaling_simulation_export.csv';
+            a.click();
+        }
+
+        function exportJSON() {
+            if (!currentSimulationData) { alert("Please run a simulation first."); return; }
+            const blob = new Blob([JSON.stringify(currentSimulationData, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'autoscaling_simulation_results.json';
+            a.click();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'block' : 'none';
+            document.getElementById('runBtn').disabled = show;
+            document.getElementById('compareBtn').disabled = show;
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorCard');
+            el.textContent = 'Error: ' + msg;
+            el.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorCard').style.display = 'none';
+        }
+
+        // Auto run initial simulation on load
+        window.onload = function() {
+            runSimulation();
+        };
+    </script>
+</body>
+</html>

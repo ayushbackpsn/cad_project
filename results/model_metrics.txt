@@ -1,0 +1,30 @@
+Target: cpu_usage_percent_target
+  MAE:  0.3170
+  RMSE: 1.0282
+  R²:   -0.3803
+
+Target: memory_usage_percent_target
+  MAE:  0.6000
+  RMSE: 0.9290
+  R²:   -0.7862
+
+Target: disk_read_kb_s_target
+  MAE:  0.2296
+  RMSE: 2.1986
+  R²:   -0.1987
+
+Target: disk_write_kb_s_target
+  MAE:  0.2585
+  RMSE: 1.4378
+  R²:   -0.2134
+
+Target: network_received_kb_s_target
+  MAE:  0.2459
+  RMSE: 1.9279
+  R²:   -0.1118
+
+Target: network_transmitted_kb_s_target
+  MAE:  0.1182
+  RMSE: 0.4419
+  R²:   -1.6639
+

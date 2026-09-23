@@ -1,0 +1,16 @@
+scenario,policy_type,scale_up_events,scale_down_events,total_scaling_events,scaling_oscillations,scaling_churn
+normal,static,0,0,0,0,0
+normal,reactive,0,1,1,0,0
+normal,predictive,0,1,1,0,0
+increasing,static,0,0,0,0,0
+increasing,reactive,0,1,1,0,0
+increasing,predictive,0,1,1,0,0
+spike,static,0,0,0,0,0
+spike,reactive,0,1,1,0,0
+spike,predictive,0,1,1,0,0
+decreasing,static,0,0,0,0,0
+decreasing,reactive,1,0,1,0,0
+decreasing,predictive,1,0,1,0,0
+variable,static,0,0,0,0,0
+variable,reactive,0,1,1,0,0
+variable,predictive,0,1,1,0,0
