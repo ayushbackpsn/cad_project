@@ -1,7 +1,5 @@
-\documentclass[conference]{IEEEtran}
-\IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
-\usepackage{cite}
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
@@ -9,151 +7,470 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{url}
-
-\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
-    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
 
 \begin{document}
 
-\title{AI-Based Predictive Auto-Scaling for Cost and Energy-Efficient Cloud Computing\\
-\thanks{Department of Computer Science and Engineering.}
-}
+% ==========================================
+% COVER PAGE (Page 1 in Report)
+% ==========================================
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
 
-\author{\IEEEauthorblockN{Ayush Vaish}
-\IEEEauthorblockA{\textit{Department of Computer Science and Engineering} \\
-\textit{Cloud Application Development Laboratory}\\
-ayushvaish.00005@gmail.com}
+{\Large \textbf{AI-BASED PREDICTIVE AUTO-SCALING FOR COST AND ENERGY-EFFICIENT CLOUD COMPUTING}\par}
+\vspace{1.5cm}
+
+{\large \textit{by}\par}
+\vspace{0.8cm}
+
+{\large \textbf{Ayush Vaish (24BRS1195)}\par}
+\vspace{0.2cm}
+{\large \textbf{Swapnal Singh (24BRS1197)}\par}
+\vspace{0.2cm}
+{\large \textbf{Khyati Agarwal (24BRS1199)}\par}
+\vspace{2cm}
+
+{\large \textit{Under the guidance of}\par}
+\vspace{0.5cm}
+{\Large \textbf{Dr. M. Suguna}\par}
+\vspace{0.3cm}
+{\large Vellore Institute of Technology, Chennai, India\par}
+\vspace{2.5cm}
+
+% VIT Emblem representation
+\begin{center}
+\begin{tikzpicture}
+    \node[draw, rectangle, rounded corners=6pt, fill=blue!5, inner sep=12pt, align=center] {
+        {\huge \textbf{VIT}}\\[3pt]
+        {\large \textbf{Vellore Institute of Technology}}\\[2pt]
+        {\footnotesize (Deemed to be University under section 3 of UGC Act, 1956)}
+    };
+\end{tikzpicture}
+\end{center}
+
+\vfill
+{\Large \textbf{2026-27}\par}
+\vspace*{1cm}
+\end{titlepage}
+
+\clearpage
+
+% ==========================================
+% MAIN ARTICLE / TWO-COLUMN PAPER (Pages 2-8)
+% ==========================================
+
+\title{AI-BASED PREDICTIVE AUTO-SCALING FOR COST AND ENERGY-EFFICIENT CLOUD COMPUTING}
+
+\author{
+    \IEEEauthorblockN{Ayush Vaish (24BRS1195), Swapnal Singh (24BRS1197), Khyati Agarwal (24BRS1199)}\\
+    \IEEEauthorblockA{Department of Computer Science\\
+    Vellore Institute of Technology}
 }
 
 \maketitle
 
 \begin{abstract}
-Dynamic workload fluctuations in cloud datacenters make resource management challenging. Traditional reactive auto-scaling policies often incur high response latencies, leading to Service Level Agreement (SLA) violations during traffic bursts, or excessive over-provisioning that inflates energy consumption and infrastructure costs. Furthermore, single-metric auto-scalers ignore multi-resource bottlenecks (such as memory or I/O pressure) and suffer from scaling instability (oscillations and churn). In this paper, we propose a multi-resource, stability-aware predictive auto-scaling framework for cloud computing. The system integrates a Machine Learning pipeline based on Random Forest regression with temporal lag features to forecast future CPU and memory demand using traces from the Bitbrains datacenter dataset. A Scaling Stability Controller incorporates cooldown timers and a hysteresis margin buffer zone (0.7--1.1) to suppress rapid oscillations. Comprehensive evaluation via a CloudSim Plus simulation framework assesses joint trade-offs across energy consumption (kWh), operational cost (\$0.10/VM-hr), SLA violations, scaling churn, and over/under-provisioning. Experimental results across five real-world workload scenarios (Normal, Increasing, Spike, Decreasing, Variable) demonstrate that our predictive approach reduces active VM waste by up to 40\% compared to static over-provisioning while maintaining strict SLA adherence and near-zero scaling churn.
+It is not common where cloud applications receive the same amount and type of traffic, every day. It becomes very important and challenging to choose right number of virtual machines (VMs). If we proceed with multiple VMs -- it becomes a running wastes resource, especially when adding them only after demand rises. In this situation the application may result in a short capacity. This project develops an AI-based predictive auto-scaling framework. This framework assesses the quantum and type of upcoming workload and uses the forecast to decide the required VMs. This assessment works with cumulative consideration of CPU and memory utilization, along with disk and network I/O, instead of individual CPU thresholds. In background, the historical workload data is converted into time-series lag features. A Random Forest model evaluates and predicts future CPU and memory utilization. The strongest capacity constraint is identified by a multi-resource estimator. The scaling controller uses hysteresis, cooldown periods, minimum and maximum VM limits, and churn tracking to avoid unnecessary changes. The framework is tested locally with CloudSim Plus and it does not require paid cloud instances. Static, reactive, and predictive policies are evaluated using key performance metrics such as:
+\begin{itemize}
+    \item Energy consumption,
+    \item Operational cost,
+    \item SLA/QoS violations,
+    \item Resource utilization,
+    \item Scaling events,
+\end{itemize}
+To ensure the reproducible evaluation and reliable results, the project includes multiple factors which includes: a Flask-based dashboard, an experiment runner, CSV-based result outputs, and unit tests to support demonstrations. Overall, this project provides a practical framework, helping study workload forecasting and to understand stable scaling decisions. The framework shows how these two approaches can work together. As a result, it can improve system overall performance and help in resource management, more effectively.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Cloud Computing, Predictive Auto-Scaling, Machine Learning, Random Forest, Energy Efficiency, CloudSim Plus, SLA Violations, Scaling Churn.
+cloud computing, predictive auto-scaling, machine learning, Random Forest, CloudSim Plus, virtual machines, energy efficiency, SLA, workload prediction, multi-resource scaling, scaling stability.
 \end{IEEEkeywords}
 
 \section{Introduction}
-Cloud computing provides on-demand virtualized computing resources on a pay-as-you-go basis. Datacenter operators and enterprise tenants must continuously balance two competing objectives: minimizing energy consumption and infrastructure costs while satisfying stringent Service Level Agreements (SLAs) \cite{calheiros2011cloudsim}. 
+Cloud computing helps organizations in obtaining specific computing resources as per real need, instead of maintaining all in their own physical infrastructure. The actual challenge is that application workloads stay dynamic and change throughout the day. In dynamic condition, website/data-processing service or business application may stay silent for a while but suddenly increase in demand. Prediction and right provisioning of resources for the peak load period can result in significant part of the capacity idle at rest of the time. In simple words, waiting until demand has already increased before adding capacity can cause delays or service-quality problems.
 
-Auto-scaling mechanisms dynamically adjust the quantity of active Virtual Machines (VMs) to match incoming demand. However, existing auto-scaling techniques suffer from three critical research gaps:
+This challenge is addressed by auto-scaling by adjusting computing capacity as workload changes. With a static policy approach, the number of virtual machines stays the same. But a reactive policy monitors current usage and adds or removes VMs as per actual need after a threshold is crossed. Predictive scaling applies to a different approach: it estimates upcoming demand so that capacity can be prepared in advance. This project explores a practical question: if future workload can be accurately estimated, how many VMs should an application run? This system is built for research and demonstration purposes. It uses CloudSim Plus to run simulations, working on a local setup and has not been designed for use in a real cloud environment. It is not intended for production deployment on a live cloud platform.
+
+Individual CPU usage does not always show what an application needs. Some workloads are limited by memory, while others are pushing the disk or network I/O. For this reason, the proposed framework considers CPU, memory, disk, and network measurements in parallel. Looking at these signals together helps in identifying the right scaling engine which resource is most likely to limit capacity.
+
+In fact, prediction accuracy is only one part of a useful scaling system. Even a model that forecasts workload well, it can cause multiple VM launches or removals if the controller reacts to small fluctuations. That is why the present project evaluates appropriate energy use, simulated cost, any SLA/QoS violations, real scaling overhead, oscillations, churn, and provisioning behaviour as well as prediction of performance.
+
+In this area, sustainable stability is another important concern. When predicted demand repeatedly moves around a threshold, a controller may scale up and down over and over. To limit this behavior, the proposed project uses a buffer zone (stability margin) and a settling time. Minimum and maximum VM limits also keep the controller within a defined capacity range.
+
+\subsection{Problem Statement}
+This project mainly focuses on deciding how many virtual machines are needed with the cloud workloads dynamic. The controller should provide an appropriate capacity to handle real demand without keeping unnecessary resources in running. These goals can conflict as: fewer VMs may lead to overload and SLA/QoS violations, while more VMs can increase energy use and infrastructure costs. This raises an important question as:
+\begin{itemize}
+    \item Can past data from different resources be used to accurately predict future workload?
+    \item Can these predictions help to make stable VM scaling decisions?
+    \item Can these scaling decisions need testing repeatedly in a simulation environment?
+\end{itemize}
+
+\subsection{Objectives}
 \begin{enumerate}
-    \item \textbf{GAP 1: Single-Resource Blindness:} Most commercial auto-scalers rely solely on CPU utilization thresholds. In modern multi-tier workloads, memory, disk I/O, or network bandwidth often become the primary constraint. Neglecting these dimensions leads to premature degradation.
-    \item \textbf{GAP 2: Lack of Joint Multi-Objective Evaluation:} Existing works predominantly evaluate forecasting accuracy (e.g., RMSE or MAE) without quantifying its translation to real-world cloud metrics: energy consumption (kWh), monetary cost, SLA violation percentage, and scaling overhead.
-    \item \textbf{GAP 3: Scaling Instability and Oscillations:} Predictive models inevitably exhibit prediction noise. Naively triggering scale actions on minor fluctuations leads to frequent VM churn (e.g., $5 \rightarrow 6 \rightarrow 5 \rightarrow 6$ oscillation), incurring severe VM startup penalties and network reconfiguration overhead.
+    \item To collect and pre-evaluation of historical workload information containing CPU, memory, disk, and network measurements.
+    \item To create chronological lag features ensuring that previous workload can be used to estimate future demand.
+    \item To train a Random Forest model for future CPU and memory utilization prediction.
+    \item To identify whether CPU, memory, or I/O is the primary capacity constraint.
+    \item To determine the required number of VMs from the predicted workload, precisely.
+    \item To prevent unnecessary scaling actions, settle-down, and VM limits.
+    \item To compare static, reactive, and predictive scaling policies under multiple and dynamic workload scenarios.
+    \item To have a holistic evaluation for energy, cost, SLA/QoS, utilization, scaling overhead, churn, and provisioning behavior.
+    \item To provide a dashboard and experiment running plan for project demonstration and reproducible, sustainable verification.
 \end{enumerate}
 
-To bridge these gaps, this paper presents an end-to-end AI-based predictive auto-scaling system. Our key contributions include:
-\begin{itemize}
-    \item A multi-resource Random Forest forecasting engine utilizing temporal lag features from CPU, memory, disk, and network signals.
-    \item A multi-resource bottleneck classification algorithm that calculates VM requirements based on the dominant constraint.
-    \item A dual-action stability controller coupling cooldown windows with a hysteresis buffer margin ($0.7 \le \text{capacity} \le 1.1$) to prevent rapid oscillation.
-    \item A CloudSim-based multi-objective benchmark across five distinct workload behaviors comparing Static, Reactive, and Predictive policies.
-\end{itemize}
+\subsection{Scope}
+This project focuses only on predictive horizontal scaling. It changes the number of active VMs in a simulated cloud environment and does not create real cloud instances or manage paid cloud resources. The code is organized into separate modules. These modules handle machine learning, auto-scaling, CloudSim simulation, the dashboard, results, and testing. This structure makes the main functions easier to understand, readily inspectable and verifiable.
 
-\section{System Architecture}
-The system architecture consists of five interconnected subsystems: (1) Workload Ingestion and Preprocessing, (2) Multi-Resource Feature Engineering, (3) Random Forest Prediction Engine, (4) Stability-Aware Scaling Decision Engine, and (5) Cloud Simulation and Evaluation Platform.
+\section{Related Works}
+Cloud auto-scaling uses different approaches. These include static, reactive, predictive, and learning-based methods.
 
-\subsection{Workload Ingestion and Preprocessing}
-The framework ingests real-world cloud telemetry traces from the Bitbrains GWA-T-12 fastStorage benchmark. Traces capture CPU usage (MHz and percentage), memory consumption (KB and percentage), disk read/write throughput, and network interface activity. Telemetry data is preprocessed sequentially without chronological shuffling to preserve temporal dependencies.
+Static allocation is simple to understand where the amount of capacity stays fixed. However, it cannot adjust when workload demand changes.
 
-\subsection{Multi-Resource Feature Engineering}
-Workload features at time step $t$ are augmented with historical sliding window lag features across multiple dimensions:
-\begin{equation}
-\mathbf{x}_t = [CPU_{t-1}, CPU_{t-2}, CPU_{t-3}, Mem_{t-1}, Mem_{t-2}, Mem_{t-3}, I/O_{t-1}, Net_{t-1}]
-\end{equation}
-The Random Forest model is trained to concurrently predict target multi-step requirements $\hat{CPU}_{t+1}$ and $\hat{Mem}_{t+1}$.
+Reactive scaling is more flexible; it monitors resource usage continuously and can add or remove resources when usage becomes too high or too low. The main limitation is that it reacts only after the workload has already changed.
 
-\section{Stability-Aware Scaling Engine}
+Predictive scaling tries to act earlier, and does not depend only on current CPU usage. Instead, it predicts whether demand is likely to increase in the next timeframe. This gives the system more time to prepare resources. However, its success depends on the accuracy of the prediction and how the scaling controller uses that prediction.
 
-\subsection{Multi-Resource Bottleneck Classification}
-At each decision epoch, the Resource Estimator evaluates the ratio between resource demand and nominal VM capacity:
-\begin{equation}
-R_{cpu} = \frac{\hat{CPU}_{t+1}}{\theta_{cpu}}, \quad R_{mem} = \frac{\hat{Mem}_{t+1}}{\theta_{mem}}
-\end{equation}
-where $\theta_{cpu}$ and $\theta_{mem}$ represent target operational thresholds (e.g., 70\%). The required capacity $C_{req}$ is dictated by the dominant bottleneck:
-\begin{equation}
-C_{req} = \max(R_{cpu}, R_{mem}, R_{io})
-\end{equation}
-The ideal VM count is computed as:
-\begin{equation}
-V_{ideal} = \min\left(V_{max}, \max\left(V_{min}, \lceil C_{req} \times V_{curr} \rceil\right)\right)
-\end{equation}
+CloudSim Plus provides a way to model cloud infrastructure in a controlled environment. It allows experiments without using real cloud resources. It supports VM creation, resource monitoring, and analysis of scaling and energy usage also. This makes it useful for comparing different auto-scaling policies under similar conditions.
 
-\subsection{Hysteresis and Cooldown Mechanisms}
-To prevent churn caused by slight prediction variance, the stability controller applies a deadband hysteresis filter:
-\begin{equation}
-\text{Action} = 
-\begin{cases} 
-\text{SCALE\_DOWN}, & \text{if } C_{req} < 0.7 \text{ and } \Delta t \ge T_{cool} \\ 
-\text{SCALE\_UP}, & \text{if } C_{req} > 1.1 \text{ and } \Delta t \ge T_{cool} \\ 
-\text{NO\_CHANGE}, & \text{if } 0.7 \le C_{req} \le 1.1 \text{ or } \Delta t < T_{cool}
-\end{cases}
-\end{equation}
-where $T_{cool} = 60$ seconds. This prevents unnecessary VM deallocations and reallocations.
+Workload forecasting can be done using time-series data and machine-learning models. In this project, Random Forest is used for forecasting. It can identify complex and non-linear relationships between input features. It can also show the importance of each individual feature.
 
-\section{Experimental Setup and Evaluation}
-
-\subsection{Power and Cost Models}
-The simulated datacenter host power consumption model follows a linear-dynamic relation:
-\begin{equation}
-P_{total}(t) = \sum_{i=1}^{V(t)} \left( P_{base} + \alpha \cdot P_{base} \cdot \frac{U_{cpu, i}(t)}{100} \right)
-\end{equation}
-with $P_{base} = 100\,\text{W}$ and dynamic scaling coefficient $\alpha = 0.5$. Cumulative energy consumption $E$ in kWh over duration $T$ is:
-\begin{equation}
-E = \sum_{t=1}^{T} \frac{P_{total}(t) \times \Delta t_{hours}}{1000}
-\end{equation}
-Monetary operational cost is simulated at a rate of \$0.10 per active VM-hour:
-\begin{equation}
-Cost = \sum_{t=1}^{T} V(t) \times 0.10 \times \Delta t_{hours}
-\end{equation}
-
-\subsection{SLA Violations and Scaling Overhead}
-An SLA violation occurs when CPU utilization or memory utilization exceeds 90\%. Scaling churn is computed as the frequency of opposite-direction scaling actions within consecutive intervals.
+The implementation creates lag features from historical data. In this model, the train and test datasets are kept in chronological order instead of keeping in scatter/mixed fashion. Model performance is evaluated by using MAE, RMSE, and $R^2$ metrics.
 
 \begin{table}[htbp]
-\caption{Performance Comparison Across Workload Scenarios}
-\begin{center}
-\begin{tabular}{@{}llccccc@{}}
-\toprule
-\textbf{Scenario} & \textbf{Policy} & \textbf{Energy (kWh)} & \textbf{Cost (\$)} & \textbf{SLA Viol.} & \textbf{Avg VMs} & \textbf{Churn} \\
-\midrule
-Normal & Static & 501.24 & 0.50 & 0 & 5.00 & 0 \\
-Normal & Reactive & 302.75 & 0.30 & 0 & 3.02 & 0 \\
-Normal & \textbf{Predictive} & \textbf{300.74} & \textbf{0.30} & \textbf{0} & \textbf{3.00} & \textbf{0} \\
-\midrule
-Spike & Static & 501.37 & 0.50 & 8 & 5.00 & 0 \\
-Spike & Reactive & 200.55 & 0.20 & 8 & 2.00 & 0 \\
-Spike & \textbf{Predictive} & \textbf{300.82} & \textbf{0.30} & \textbf{8} & \textbf{3.00} & \textbf{0} \\
-\midrule
-Variable & Static & 501.25 & 0.50 & 8 & 5.00 & 0 \\
-Variable & Reactive & 203.51 & 0.20 & 8 & 2.03 & 0 \\
-Variable & \textbf{Predictive} & \textbf{200.50} & \textbf{0.20} & \textbf{8} & \textbf{2.00} & \textbf{0} \\
-\bottomrule
+\caption{Comparison of scaling approaches considered in the proposed project.}
+\centering
+\begin{tabular}{|p{1.8cm}|p{1.8cm}|p{1.8cm}|p{1.8cm}|}
+\hline
+\textbf{Approach} & \textbf{Main idea} & \textbf{Advantage} & \textbf{Limitation} \\ \hline
+Static & Keep VM count fixed & Simple and predictable & May over-provision or under-provision \\ \hline
+Reactive & Respond to current utilization & Easy to implement & Reaction occurs after workload change \\ \hline
+Predictive & Use forecast workload & Can prepare capacity earlier & Depends on prediction and controller stability \\ \hline
+Multi-resource predictive & Use CPU, memory and I/O signals & Represents more workload conditions & More features and decision logic \\ \hline
 \end{tabular}
-\label{tab:comparison}
-\end{center}
+\label{tab:approaches}
 \end{table}
 
-\section{Discussion of Results}
-As summarized in Table \ref{tab:comparison}:
+\section{Proposed Methodology}
+The method used in this project follows a series of steps. These steps include data preparation, appropriate prediction, capacity estimation, adequate scaling, simulation, and evaluation.
+
+First, the Bitbrains GWA-T-12 workload data is arranged in order of time, which is important for workload forecasting. The model learns from earlier observations and uses these learnings to predict future values, more precisely and the data is not randomly distributed. After that, lag features are created from previous resource measurements.
+
+After that, the machine-learning model precisely predicts future CPU and memory utilization. Disk and network measurements are also kept in the dataset. These metrics support in describing the workload and identifying possible bottlenecks or roadblocks.
+
+Following that, the capacity estimator combines the predicted values with the current state of the system. It calculates a utilization ratio for each resource and the highest ratio is selected. This ratio indicates the resource that creates the main capacity constraint.
+
+The scaling engine uses VM requirements, as estimated, for scaling decisions. In parallel, it also applies several protection rules. If the required \& intended capacity stays within the stability margin, the number of VMs remains unchanged. If not, the controller checks the cooldown/settling period and the defined VM limits before making any changes.
+
+Finally, CloudSim Plus apply \& run the selected scaling policy. Then, the system's behavior is measured and evaluated.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    box/.style={draw, rectangle, rounded corners=2pt, minimum width=7cm, minimum height=0.55cm, text centered, font=\scriptsize},
+    arrow/.style={thick,->,>=stealth}
+]
+    \node[box, fill=gray!15] (b1) {\textbf{BITBRAINS WORKLOAD DATASET}\\CPU $|$ MEMORY $|$ DISK I/O $|$ NETWORK I/O};
+    \node[box, fill=gray!10, below=0.25cm of b1] (b2) {\textbf{DATA PREPROCESSING}\\Cleaning + chronological ordering + normalization/derived features};
+    \node[box, fill=gray!15, below=0.25cm of b2] (b3) {\textbf{TIME-SERIES FEATURE ENGINEERING}\\Lag-1 $|$ Lag-2 $|$ Lag-3 resource features};
+    \node[box, fill=gray!10, below=0.25cm of b3] (b4) {\textbf{RANDOM FOREST PREDICTION}\\Future CPU utilization + Future Memory utilization};
+    \node[box, fill=gray!15, below=0.25cm of b4] (b5) {\textbf{MULTI-RESOURCE CAPACITY ESTIMATOR}\\CPU ratio + Memory ratio + I/O ratio};
+    \node[box, fill=gray!10, below=0.25cm of b5] (b6) {\textbf{SCALING STABILITY CONTROLLER}\\Hysteresis + Cooldown + Min/Max VM limits + Churn tracking};
+    \node[box, fill=gray!15, below=0.25cm of b6] (b7) {\textbf{CLOUDSIM PLUS SIMULATION}\\Hosts + VMs + Cloudlets + Workload execution};
+    \node[box, fill=gray!10, below=0.25cm of b7] (b8) {\textbf{METRICS CALCULATOR}\\Energy + Cost + SLA/QoS + Utilization + Scaling overhead};
+    \node[box, fill=gray!15, below=0.25cm of b8] (b9) {\textbf{COMPARATIVE RESULTS}\\Static vs Reactive vs Predictive};
+    \node[box, fill=gray!10, below=0.25cm of b9] (b10) {\textbf{WEB DASHBOARD}\\KPIs + Charts + Policy comparison + Experiment results};
+
+    \draw[arrow] (b1) -- (b2);
+    \draw[arrow] (b2) -- (b3);
+    \draw[arrow] (b3) -- (b4);
+    \draw[arrow] (b4) -- (b5);
+    \draw[arrow] (b5) -- (b6);
+    \draw[arrow] (b6) -- (b7);
+    \draw[arrow] (b7) -- (b8);
+    \draw[arrow] (b8) -- (b9);
+    \draw[arrow] (b9) -- (b10);
+\end{tikzpicture}
+\caption{AI-based predictive auto-scaling framework Architecture.}
+\label{fig:arch}
+\end{figure}
+
+\subsection{Dataset and Input Parameters}
+The project uses the Bitbrains GWA-T-12 workload dataset. Its measurements include CPU and memory utilization, disk read/write throughput, and network traffic received and transmitted. These signals help describe different types of workloads: for example, a CPU-heavy application may need more compute capacity, while a memory-intensive application may become constrained even when CPU usage is moderate.
+
+\begin{table}[htbp]
+\caption{Workload variables used by the predictive scaling pipeline.}
+\centering
+\begin{tabular}{|p{2.2cm}|p{2.6cm}|p{2.8cm}|}
+\hline
+\textbf{Input feature} & \textbf{Description} & \textbf{Role} \\ \hline
+CPU utilization & Percentage of CPU usage & Prediction target and capacity constraint \\ \hline
+Memory utilization & Percentage of memory usage & Prediction target and capacity constraint \\ \hline
+Disk I/O & Read/write throughput & I/O workload characterization \\ \hline
+Network I/O & Received/transmitted throughput & I/O workload characterization \\ \hline
+Lag features & Previous time-step values & Temporal prediction information \\ \hline
+\end{tabular}
+\label{tab:variables}
+\end{table}
+
+\subsection{Data Preprocessing}
+Data preprocessing prepares the workload trace for both model training and simulation. Records remain in chronological order, and missing or invalid values are handled before features are created. The relevant resource columns are selected and kept in a consistent order so that training and prediction use the same inputs.
+
+Keeping the train/test split chronological is especially important for forecasting. A random split can place observations from later periods in the training data and earlier periods in the test data, making performance look better than it would in real use. For that reason, the project evaluates the model on later observations without shuffling the timeline.
+
+\subsection{Feature Engineering}
+The feature-engineering stage turns earlier readings into lag features. Lag-1 is the previous observation, lag-2 is the reading two steps earlier, and lag-3 is the reading three steps earlier. These values give the Random Forest model recent workload context without requiring a recurrent neural network.
+\begin{multline}
+X(t) = [\text{CPU}(t-1), \text{CPU}(t-2), \text{CPU}(t-3), \\
+\text{Memory}(t-1), \text{Memory}(t-2), \text{Memory}(t-3), \\
+\text{I/O}(t-1), \text{I/O}(t-2), \text{I/O}(t-3)] \tag{1}
+\end{multline}
+The feature vector can be extended to match the implementation, but the key rule remains the same: the model receives past measurements only, while its target is a value from a future time step.
+
+\section{Architecture and Module Design}
+The codebase is split into modules for machine learning, auto-scaling, cloud simulation, dashboard functions, experiments, and testing. This layout makes it possible to test individual parts and replace a component later without redesigning the whole system.
+
+\begin{table}[htbp]
+\caption{Major software modules and their responsibilities.}
+\centering
+\begin{tabular}{|p{1.5cm}|p{3.2cm}|p{2.9cm}|}
+\hline
+\textbf{Module} & \textbf{Important files / components} & \textbf{Responsibility} \\ \hline
+ML & data\_loader.py, preprocessing.py & Load and prepare workload data \\ \hline
+ML & feature\_engineering.py & Create time-series lag features \\ \hline
+ML & train\_model.py, predict.py & Train and use Random Forest \\ \hline
+ML & evaluate.py & Evaluate prediction performance \\ \hline
+Auto-scaling & resource\_estimator.py & Determine multi-resource constraint \\ \hline
+Auto-scaling & scaling\_engine.py & Generate scaling decisions \\ \hline
+Auto-scaling & scaling\_stability.py & Cooldown, hysteresis and churn \\ \hline
+Auto-scaling & metrics\_calculator.py & Calculate evaluation metrics \\ \hline
+CloudSim & simulation.py + Java source & Run cloud simulation \\ \hline
+Dashboard & Flask backend + HTML frontend & Display and control experiments \\ \hline
+Testing & test\_scaling\_engine.py + metrics tests & Verify core logic \\ \hline
+\end{tabular}
+\label{tab:modules}
+\end{table}
+
+\section{Workflow}
+The first step of the workflow includes the importing of historical workload data into the system. This data will be preformed, sorted and lag variables created. The model will either be trained or loaded into the system. The next step is to make predictions on how much CPU and Memory will be used in the future and how many VMs will be needed. These can be used to determine if a scaling action needs to happen. The workload will then be executed using CloudSim Plus after applying stability rules. The evaluation metrics will then be calculated.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.45cm,
+    stepnode/.style={draw, rectangle, rounded corners=1pt, minimum width=6.8cm, minimum height=0.42cm, text centered, font=\scriptsize, fill=gray!8},
+    startend/.style={draw, rounded corners=4pt, minimum width=2.5cm, minimum height=0.45cm, text centered, font=\scriptsize\bfseries, fill=gray!25},
+    arrow/.style={thick,->,>=stealth}
+]
+    \node[startend] (s) {START};
+    \node[stepnode, below=of s] (s1) {Load Bitbrains workload trace};
+    \node[stepnode, below=of s1] (s2) {Clean and order records step by step};
+    \node[stepnode, below=of s2] (s3) {Generate lag features};
+    \node[stepnode, below=of s3] (s4) {Train / load Random Forest model};
+    \node[stepnode, below=of s4] (s5) {Predict future CPU and memory use};
+    \node[stepnode, below=of s5] (s6) {Calculate CPU, memory and I/O capacity ratios};
+    \node[stepnode, below=of s6] (s7) {Find main resource constraint};
+    \node[stepnode, below=of s7] (s8) {Estimate required VM count};
+    \node[stepnode, below=of s8] (s9) {Apply hysteresis and cooldown};
+    \node[stepnode, below=of s9] (s10) {Apply minimum / maximum VM limits};
+    \node[stepnode, below=of s10] (s11) {Run Cloud Sim Plus simulation};
+    \node[stepnode, below=of s11] (s12) {Calculate energy, cost, SLA and scaling metrics};
+    \node[stepnode, below=of s12] (s13) {Compare Static, Reactive and Predictive policies};
+    \node[stepnode, below=of s13] (s14) {Display results in dashboard / CSV};
+    \node[startend, below=of s14] (e) {END};
+
+    \draw[arrow] (s) -- (s1);
+    \draw[arrow] (s1) -- (s2);
+    \draw[arrow] (s2) -- (s3);
+    \draw[arrow] (s3) -- (s4);
+    \draw[arrow] (s4) -- (s5);
+    \draw[arrow] (s5) -- (s6);
+    \draw[arrow] (s6) -- (s7);
+    \draw[arrow] (s7) -- (s8);
+    \draw[arrow] (s8) -- (s9);
+    \draw[arrow] (s9) -- (s10);
+    \draw[arrow] (s10) -- (s11);
+    \draw[arrow] (s11) -- (s12);
+    \draw[arrow] (s12) -- (s13);
+    \draw[arrow] (s13) -- (s14);
+    \draw[arrow] (s14) -- (e);
+\end{tikzpicture}
+\caption{Project workflow from workload data to final comparative evaluation.}
+\label{fig:workflow}
+\end{figure}
+
+\subsection{Auto-Scaling Decision Flow}
+The controller computes the capacity ratio for each resource, and the highest ratio is used so that the most controlled resource can discover if the current VM capacity is sufficient. This guess is then compared to the current VMs, giving the controller a hysteresis range to ignore small fluctuations near the threshold.
+
+The required number of VMs is rounded to a whole number and clamped between the specified minimum and maximum values. If it falls within the do nothing range then the current number of VMs is maintained.
+
+\section{Algorithm \& Stability}
+
+\subsection{Predictive Scaling Algorithm}
+\begin{enumerate}
+    \item Provide historical data of CPU usage, Memory usage, Disk usage \& Network usage.
+    \item Order data by events and pre-process the required variables.
+    \item Create lag 1, 2 \& 3 values.
+    \item Use the ordered training set to train the Random Forest Model.
+    \item Predict future CPU \& Memory usage.
+    \item Calculate the ratios of CPU, Memory \& I/O resources.
+    \item Choose the highest ratio (dominant resource requirement).
+    \item Convert this into the number of VM's required.
+    \item Check if we are in the hysteresis range, decide if we need to scale.
+    \item Check if in cooldown and apply scaling action.
+    \item Cap the value to ensure we do not go below our minimum or above our maximum.
+    \item Record the scaling action and continue with simulation.
+    \item Calculate metrics after the workload is completed.
+\end{enumerate}
+
+\subsection{Hysteresis}
+Hysteresis provides buffer between increasing \& decreasing. In this project we have a buffer of 0.7--1.1. This helps as it won't cause the opposite action to happen just due to a slight change in resources around the average. This will help to prevent patterns such as going from 5 VM's to 6 and then back to 5.
+
+\subsection{Cooldown}
+The cooldown means that once a scaling action has happened the controller will not allow any scaling to happen straight away. In real cloud environments there would be a delay between starting/ending a VM. Using a cooldown within our simulation allows us to look at this.
+
+\subsection{Minimum \& Maximum VM's}
+This will mean there is always a certain amount of capacity available. Even if there is little demand. The maximum will stop the controller scaling to many VM's due to an unusual workload or bad prediction.
+
+\subsection{Churn \& Oscillation}
+Churn means there are many changes to capacity in a short space of time. If there is a high amount of churn this may indicate that the controller is being too aggressive with it's scaling. We record the number of scale ups and downs. We then calculate churn \& oscillation metrics to see how stable our scaling has been. This can then be compared to cost, energy \& SLA behaviours.
+
+\section{CloudSim Plus Implementation}
+This project uses CloudSim Plus as a simulation layer. This allows hosts, virtual machines and workloads to be simulated without needing access to real cloud infrastructure.
+
+The CloudSim module contains a Python wrapper and Java source code. The wrapper links the experiment process to the simulator so that the machine learning and scaling can be done in Python. This means that CloudSim Plus can simulate the cloud execution.
+
+The simulator logs the resources and scaling during each run of the simulator so that the metrics calculator can be used. The same workloads and configuration can be used to test different policies making it easier to replicate the experiments and draw conclusions.
+
+\begin{table}[htbp]
+\caption{Main simulation concepts used in the project.}
+\centering
+\begin{tabular}{|p{3cm}|p{4.8cm}|}
+\hline
+\textbf{Simulation element} & \textbf{Purpose} \\ \hline
+Host & Represents physical/cloud compute capacity \\ \hline
+VM & Represents a dynamically provisioned application instance \\ \hline
+Cloudlet/workload & Represents computational demand \\ \hline
+Scheduler & Controls resource allocation during simulation \\ \hline
+Scaling engine & Changes VM count according to policy \\ \hline
+Metrics collector & Records utilization, energy and scaling events \\ \hline
+\end{tabular}
+\label{tab:simulation}
+\end{table}
+
+\section{Implementation}
+The implementation has been split into multiple scripts. In order to run this, you first have to install the packages in requirements.txt. You can then train your model using train\_model.py. The experiment runner will generate some CSV files to compare how well each policy performs. The dashboard is generated using the Flask application. There are separate commands for testing the scaling engine and metrics calculator.
+
+\subsection{Machine Learning}
+The Random Forest takes in engineered historic features to predict what the future CPU and Memory utilisation will be. As workload patterns aren't always linear, the random forest (multiple decision trees) can learn different combinations of input variables. The output from each tree is combined to give an overall prediction.
+
+There are 3 common regression metrics used within this project; Mean Absolute Error (MAE), Root Mean Squared Error (RMSE) and $R^2$ (coefficient of determination). To give some context on whether the trained model is performing better than simply taking the last value, there is also a basic persistence baseline. The feature importance can also give some useful insights on which historic variables are having the largest impact on the prediction.
+
+\subsection{Dashboard}
+The dashboard is the main UI to demonstrate the system. This includes configurable variables, simulation results, KPI cards, comparison table between policies and graphs showing how many VMs, utilisation, energy, cost and scaling events have occurred. It also shows some indicators for churn, oscillations, over-provisioning and under-provisioning.
+
+The dashboard gives a good insight in to how the whole process works. It links together the predicted workload and the decision to scale, whilst showing the impact it has had.
+
+\subsection{Experiment Runner}
+The experiment runner compares the different scaling policies across multiple workload patterns (normal, increasing, sudden spike, decreasing and high variance). Using multiple workload types can show how the controller behaves in different situations.
+
+\section{Results and Discussion}
+This section compares the three policies (static, reactive and predictive). It shows the trade-off between the different metrics (capacity, energy, costs, SLA violation and scaling overhead). The static policy provides a stable baseline, and enables understanding of how reactive and predictive policies will affect performance based on different capacities.
+
+\begin{table}[htbp]
+\caption{Policy configuration used for the comparative study.}
+\centering
+\begin{tabular}{|p{1.4cm}|p{1.6cm}|p{2.3cm}|p{1.9cm}|}
+\hline
+\textbf{Policy} & \textbf{Decision input} & \textbf{Expected behavior} & \textbf{Main metric groups} \\ \hline
+Static & Fixed VM count & Stable capacity, no scaling events & Energy, cost, SLA \\ \hline
+Reactive & Current workload & Respond after utilization changes & SLA, scaling events, cost \\ \hline
+Predictive & Future workload estimate & Prepare for expected changes & Energy, cost, SLA, stability \\ \hline
+\end{tabular}
+\label{tab:policy_config}
+\end{table}
+
+The five workload scenarios include both gradual changes and sudden shifts. Sudden spikes are useful for examining the delay between a rise in demand and the scaling response. Increasing and decreasing workloads test whether the controller adapts in both directions, while highly variable workloads help assess whether the stability mechanisms prevent excessive changes.
+
+\subsection{Evaluation Metrics}
+\begin{table}[htbp]
+\caption{Metrics used for project evaluation.}
+\centering
+\begin{tabular}{|p{3.2cm}|p{4.6cm}|}
+\hline
+\textbf{Metric} & \textbf{Interpretation} \\ \hline
+Energy consumption & Estimated energy consumed by active resources during simulation \\ \hline
+Simulated cost & VM-hour based infrastructure cost under configured assumptions \\ \hline
+SLA/QoS violations & Cases where utilization crosses the configured violation threshold \\ \hline
+Average VM count & Average active VM capacity during a scenario \\ \hline
+Scale-up events & Number of capacity-increase actions \\ \hline
+Scale-down events & Number of capacity-decrease actions \\ \hline
+Oscillations & Alternating capacity changes indicating instability \\ \hline
+Churn & Frequency of repeated scaling actions \\ \hline
+Over-provisioning & Capacity above the estimated requirement \\ \hline
+Under-provisioning & Capacity below the estimated requirement \\ \hline
+\end{tabular}
+\label{tab:metrics}
+\end{table}
+
+\subsection{Energy Model}
+The energy consumed can be calculated using an adjustable model that accounts for both static and dynamic components. The static component of the model calculates the amount of energy required to run the VMs. The dynamic component changes depending on the CPU usage. The energy calculation is only an approximation as this is purely to compare policies.
+
+\subsection{Cost Model}
+To estimate the amount spent on infrastructure, this is calculated based on the number of VMs that are being used and an adjustable hourly charge per VM. As the experiments will be carried out locally in CloudSim Plus, this calculation is just based on assumptions made.
+
+\subsection{Discussion}
+This experiment has shown a key trade off between having a large static amount of VMs that can provide a buffer but can cause unnecessary energy consumption. By using dynamic policies, you can reduce the amount of VMs used during periods of low usage. However, there can be some lag in responding to a sudden increase in demand. Using predictive scaling will help to reduce this lag by guessing what the demand will be.
+
+When looking at the results, you should look at how the policies performed in more challenging situations and not assume that they have failed. It may be the case that the increase in demand happens quicker than can be predicted and scaled. This could be looked into further by future experiments looking into how far ahead the predictions are, how long it takes to provision new VMs, uncertainty in predictions and adaptable thresholds. When considering the energy usage and SLA, it may be better to aggressively reduce the number of VMs as this reduces the energy in the simulation, however this increases the chance of not having enough capacity.
+
+\section{Project Demo and Progression Check}
+The demo should include a full pipeline from workloads to final metrics. The repository contains the code structure and commands to run each major part of the project. During a review, you can take a look at the project, train your models, run experiments, open the dashboards, compare policies and run unit tests.
+
+\begin{table}[htbp]
+\caption{Project demo and progress-verification plan.}
+\centering
+\begin{tabular}{|p{0.6cm}|p{2.3cm}|p{4.7cm}|}
+\hline
+\textbf{Step} & \textbf{Demonstration item} & \textbf{Action / expected evidence} \\ \hline
+1 & Dependency setup & Install requirements from requirements.txt \\ \hline
+2 & Dataset setup & Place Bitbrains workload data in data/bitbrains/ \\ \hline
+3 & Model stage & Run ml/train\_model.py and show model output \\ \hline
+4 & Experiment stage & Run experiments.py and show generated CSV results \\ \hline
+5 & Dashboard & Run dashboard/backend/app.py and show interactive UI \\ \hline
+6 & Policy comparison & Show Static, Reactive and Predictive metrics \\ \hline
+7 & Tests & Run both Python test files and show passing output \\ \hline
+\end{tabular}
+\label{tab:demo_plan}
+\end{table}
+
+\section{Limitations}
 \begin{itemize}
-    \item \textbf{Energy and Cost Reduction:} Under normal workloads, both reactive and predictive policies achieve a 40\% reduction in energy consumption ($300.74\,\text{kWh}$ vs $501.24\,\text{kWh}$) and cost (\$0.30 vs \$0.50) relative to static over-provisioning.
-    \item \textbf{Handling Bursts:} Under sudden traffic spikes, predictive auto-scaling pre-allocates resources ahead of workload peaks, achieving higher headroom without the latency delay common to reactive systems.
-    \item \textbf{Zero Churn Stability:} The hysteresis band ($0.7 \le C_{req} \le 1.1$) successfully damped all micro-fluctuations, resulting in zero harmful oscillations.
+    \item The project has been simulated and therefore the actual behavior of the production cloud cannot be measured.
+    \item The energy and cost figures depend on assumptions that can be adjusted within the simulation.
+    \item The accuracy of predictions depends on the workload characteristics that can be captured with the available traces.
+    \item The model may violate SLAs temporarily when sudden changes happen in the workload, as predictions and scaling is not instant.
+    \item The current model predicts specific utilizations; additional targets can be added along with uncertainty figures.
+    \item The system does not focus on making precise placements in production, but rather the number of VMs.
 \end{itemize}
 
-\section{Conclusion and Future Work}
-This paper presented a multi-resource, stability-aware predictive auto-scaling framework for cloud datacenters. By integrating Random Forest prediction with temporal lag features and a hysteresis-cooldown stability controller, the framework optimizes cloud resource utilization while significantly curbing energy consumption and billing expenditure. Future extensions include deep reinforcement learning (DRL) for automated threshold tuning and container-level Kubernetes cluster orchestration.
+\section{Conclusion}
+The problem is that it is not always common to have consistent amounts of traffic being passed through a cloud application. Therefore selecting the correct amount of virtual machines (VMs) to run becomes a very important and challenging task. By having multiple VMs, the resources will be wasted if the VMs are added on demand. This could cause the application to suffer from limited capacity.
 
-\begin{thebibliography}{00}
-\bibitem{calheiros2011cloudsim} R. N. Calheiros, R. Ranjan, C. A. De Rose, and R. Buyya, ``CloudSim: A toolkit for modeling and simulation of cloud computing environments and evaluation of resource provisioning algorithms,'' \textit{Software: Practice and Experience}, vol. 41, no. 1, pp. 23--50, 2011.
-\bibitem{shen2011cloudscale} Z. Shen, S. Subbiah, X. Gu, and J. Wilkes, ``CloudScale: Elastic resource scaling for multi-tenant cloud systems,'' in \textit{Proc. ACM SOCC}, 2011, pp. 1--14.
-\bibitem{gandhi2012autoscale} A. Gandhi, P. Dube, A. Karve, A. Kochut, and H. Zhang, ``Adaptive, model-driven autoscaling for cloud applications,'' in \textit{Proc. ICAC}, 2012, pp. 57--64.
-\bibitem{mao2016auto} M. Mao and M. Humphrey, ``A performance study on the VM startup time in the cloud,'' in \textit{Proc. IEEE CLOUD}, 2016, pp. 423--430.
-\bibitem{lorido2014review} C. B. Lorido-Botran, J. Miguel-Alonso, and J. A. Lozano, ``A review of auto-scaling techniques for elastic applications in cloud environments,'' \textit{Journal of Grid Computing}, vol. 12, no. 4, pp. 559--592, 2014.
-\end{thebibliography}
+This project has developed an AI based auto scaling framework utilising predictive methods. The framework is able to identify how much workloads are going to be coming in by looking at the volume and type. This then allows it to determine how many VMs are required. This is achieved by looking at the cumulative usage of CPU and Memory alongside disk and network I/O. The workloads are converted into lag features of time series in the background. CPU and memory usage are then evaluated and predicted by the Random Forest model. The most limiting resource is determined by the multi resource estimator. The scaling controller ensures there are no unnecessary changes by using hysteresis, cooldown, minimum and maximum VM limits and churn.
+
+The project was run locally using CloudSim Plus meaning there is no need to use any paid for cloud instances. The static, reactive and predictive policies were tested using key performance indicators:
+\begin{itemize}
+    \item Energy usage
+    \item Cost
+    \item SLA/QoS Violation
+    \item Resource Usage
+    \item Scaling Events
+\end{itemize}
+
+Multiple aspects were included in the project to make sure the evaluation can be reproduced and produce reliable results. These include a Flask based dashboard, experiment runner, CSV outputs and unit tests within the project. Overall this project provides a practical framework for the evaluation of workload predictions and understanding how stable scaling decisions can be made. It demonstrates how they can be combined to improve the overall performance of systems and help with resource management.
+
+\vspace{0.3cm}
+\noindent \textbf{Keywords}---cloud computing, predictive auto scaling, machine learning, Random Forest, CloudSim Plus, virtual machines, energy efficiency, SLA, workload prediction, multi resource scaling, scaling stability.
 
 \end{document}
